@@ -8,7 +8,7 @@ const bodyParser = require('body-parser')
 
 // Mongoose setup
 const mongoose = require('mongoose')
-mongoose.connect('mongodb://localhost/peopleDB', { useNewUrlParser: true })
+mongoose.connect('mongodb://localhost/expenseDB', { useNewUrlParser: true, useUnifiedTopology: true, useFindAndModify: false })
 
 app.use(express.static(path.join(__dirname, 'dist')))
 app.use(express.static(path.join(__dirname, 'node_modules')))
