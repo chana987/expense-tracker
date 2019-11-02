@@ -8,6 +8,6 @@ const expenseSchema = new Schema({
     group: String
 })
 
-const Expense = mongoose.model("expense", expenseSchema)
+const Expense = mongoose.model("Expense", expenseSchema)
 
 module.exports = Expense
