@@ -1,50 +1,34 @@
 const express = require("express")
 const router = express.Router()
 const moment = require("moment")
-
 const Expense = require("../models/Expense")
-
-// const data = require('../models/expenses.json')
-
-// data.forEach(e => new Expense({
-//     name: e.item,
-//     amount: e.amount,
-//     date: e.date,
-//     group: e.group
-// }).save())
 
 router.get("/expenses", function(req, res) {
 	let group = req.query.group
-	let d1 = req.query.d1 || 0
-	let d2 = req.query.d2 || moment(new Date()).format("LLLL")
-	let min = req.query.min || 0
-	let max = req.query.max || Infinity
-
-	if (group) {
-		Expense.find({
-			$and: [
-				{ date: { $gte: d1, $lte: d2 } },
-				{ amount: { $gte: min, $lte: max } },
-				{ group: group }
-			]
-		}).exec((err, data) => res.send(data))
-	} else {
-		Expense.find({
-			$and: [
-				{ date: { $gte: d1, $lte: d2 } },
-				{ amount: { $gte: min, $lte: max } }
-			]
-		}).exec((err, data) => res.send(data))
+	let fromDate = req.query.d1 || 0
+	let toDate = req.query.d2 || moment(new Date()).format("LLLL")
+	let minAmount = req.query.min || 0
+	let maxAmount = req.query.max || Infinity
+	let queries = [
+		{ date: { $gte: new Date(fromDate), $lte: new Date(toDate) } },
+		{ amount: { $gte: minAmount, $lte: maxAmount } },
+	]
+	if (group) { 
+		queries.push({ group: group })
 	}
+		
+	Expense.find({
+		$and: queries
+	}).exec((err, data) => res.send(data))
 })
 
 router.get("/total", function(req, res) {
-	let d1 = req.query.d1 || 0
-	let d2 = req.query.d2 || moment(new Date()).format("LLLL")
+	let fromDate = req.query.d1 || 0
+	let toDate = req.query.d2 || moment(new Date()).format("LLLL")
 
 	Expense.aggregate([
 		{
-			$match: { date: { $gte: new Date(d1), $lte: new Date(d2) } }
+			$match: { date: { $gte: new Date(fromDate), $lte: new Date(toDate) } }
 		},
 		{
 			$group: {
@@ -78,8 +62,13 @@ router.put("/update/group", function(req, res) {
 		{ name: req.body.name },
 		{ $set: { group: req.body.group } },
 		{ new: true }
-	).exec((err, expense) =>
-		res.send(`Changed group of ${expense.name} to ${expense.group}`)
+	).exec((err, expense) => {
+		if (expense) {
+			res.send(`Changed amount of ${expense.name} to ${expense.group}`)
+		} else {
+			res.send(`${req.body.name} does not exist in database`)
+		}
+	}
 	)
 })
 
@@ -88,15 +77,24 @@ router.put("/update/amount", function(req, res) {
 		{ name: req.body.name },
 		{ $set: { amount: req.body.amount } },
 		{ new: true }
-	).exec((err, expense) =>
-		res.send(`Changed amount of ${expense.name} to ${expense.amount}`)
+	).exec((err, expense) => {
+		if (expense) {
+			res.send(`Changed amount of ${expense.name} to ${expense.amount}`)
+		} else {
+			res.send(`${req.body.name} does not exist in database`)
+		}
+	}
 	)
 })
 
-router.delete("/delete", function(req, res) {
-	Expense.findOneAndDelete({ name: req.body.name }).exec((err, expense) =>
-		res.send(`Removed ${expense.name} from expenses`)
-	)
+router.delete("/delete/:name", function(req, res) {
+	Expense.findOneAndDelete({ name: req.params.name }).exec((err, expense) => {
+		if (expense) {
+			res.send(`Removed ${expense.name} from expenses`)
+		} else {
+			res.send(`${req.params.name} does not exist in database`)
+		}
+	})
 })
 
 module.exports = router
