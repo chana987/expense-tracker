@@ -44,7 +44,7 @@ router.get("/total", function(req, res) {
 
 	Expense.aggregate([
 		{
-			$match: { date: { $gte: d1, $lte: d2 } }
+			$match: { date: { $gte: new Date(d1), $lte: new Date(d2) } }
 		},
 		{
 			$group: {
