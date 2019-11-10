@@ -1,0 +1,1 @@
+document.getElementById('prints').innerHTML = "Hello, World"
